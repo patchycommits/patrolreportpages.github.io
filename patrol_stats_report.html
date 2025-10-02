@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Patrol Statistics</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 1200px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .header {
+            background-color: #c8102e;
+            color: white;
+            padding: 20px;
+            text-align: center;
+            border-radius: 8px;
+            margin-bottom: 30px;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 28px;
+        }
+        .header p {
+            margin: 5px 0 0 0;
+            font-size: 16px;
+        }
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 30px;
+        }
+        .stat-box {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .stat-box h3 {
+            margin: 0 0 10px 0;
+            color: #666;
+            font-size: 14px;
+            text-transform: uppercase;
+        }
+        .stat-box .number {
+            font-size: 36px;
+            font-weight: bold;
+            color: #c8102e;
+        }
+        .chart-container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        .chart-container h2 {
+            margin-top: 0;
+            color: #333;
+            border-bottom: 2px solid #c8102e;
+            padding-bottom: 10px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            background: white;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        th {
+            background-color: #c8102e;
+            color: white;
+            padding: 12px;
+            text-align: left;
+            font-weight: bold;
+        }
+        td {
+            padding: 10px 12px;
+            border-bottom: 1px solid #ddd;
+        }
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        .percentage {
+            color: #666;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>September 2025 Neighborhood Patrol Statistics</h1>
+        <p>Beat 5015</p>
+    </div>
+
+    <div class="stats-container">
+        <div class="stat-box">
+            <h3>Total Incidents</h3>
+            <div class="number">253</div>
+        </div>
+        <div class="stat-box">
+            <h3>Incident Types</h3>
+            <div class="number">17</div>
+        </div>
+        <div class="stat-box">
+            <h3>Proactive Patrols</h3>
+            <div class="number">223</div>
+            <div class="percentage">88.1%</div>
+        </div>
+        <div class="stat-box">
+            <h3>Response Calls</h3>
+            <div class="number">30</div>
+            <div class="percentage">11.9%</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <h2>Incident Distribution</h2>
+        <canvas id="barChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Incident Type Breakdown</h2>
+        <canvas id="pieChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <h2>Detailed Statistics</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th># of Incidents</th>
+                    <th>% of Total</th>
+                </tr>
+            </thead>
+            <tbody id="tableBody"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const data = [
+            {type: "CONTRACT CHECK", count: 155},
+            {type: "NEIGHBORHOOD CHECK", count: 48},
+            {type: "STATIONARY VISIBILITY PATROL", count: 20},
+            {type: "MEET THE CITIZEN", count: 8},
+            {type: "VEHICLE SUSPICIOUS", count: 6},
+            {type: "ALARM LOCAL", count: 2},
+            {type: "MENTAL HEALTH CALL", count: 2},
+            {type: "OPEN DOOR WINDOW", count: 2},
+            {type: "VEHICLE ABANDONED", count: 2},
+            {type: "ACCIDENT MINOR", count: 1},
+            {type: "DIST FAMILY", count: 1},
+            {type: "INFORMATION CALL", count: 1},
+            {type: "THEFT OTHER", count: 1},
+            {type: "TRAFFIC INITIATIVE", count: 1},
+            {type: "UNK MEDICAL EMERGENCY", count: 1},
+            {type: "VEHICLE STICKERED", count: 1},
+            {type: "WARRANT SERVICE", count: 1}
+        ];
+
+        const total = data.reduce((sum, item) => sum + item.count, 0);
+
+        // Populate table
+        const tableBody = document.getElementById('tableBody');
+        data.forEach(item => {
+            const row = tableBody.insertRow();
+            const percentage = ((item.count / total) * 100).toFixed(1);
+            row.innerHTML = `
+                <td>${item.type}</td>
+                <td>${item.count}</td>
+                <td>${percentage}%</td>
+            `;
+        });
+
+        // Bar Chart
+        const barCtx = document.getElementById('barChart').getContext('2d');
+        new Chart(barCtx, {
+            type: 'bar',
+            data: {
+                labels: data.map(d => d.type),
+                datasets: [{
+                    label: 'Number of Incidents',
+                    data: data.map(d => d.count),
+                    backgroundColor: '#c8102e',
+                    borderColor: '#8b0000',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+
+        // Pie Chart - Top 5 + Others
+        const top5 = data.slice(0, 5);
+        const othersCount = data.slice(5).reduce((sum, item) => sum + item.count, 0);
+        
+        const pieCtx = document.getElementById('pieChart').getContext('2d');
+        new Chart(pieCtx, {
+            type: 'pie',
+            data: {
+                labels: [...top5.map(d => d.type), 'Others'],
+                datasets: [{
+                    data: [...top5.map(d => d.count), othersCount],
+                    backgroundColor: [
+                        '#c8102e',
+                        '#e74c3c',
+                        '#3498db',
+                        '#2ecc71',
+                        '#f39c12',
+                        '#95a5a6'
+                    ]
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>
