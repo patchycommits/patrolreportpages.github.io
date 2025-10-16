@@ -1,0 +1,114 @@
+// Barkers Ridge HOA Financial Data
+// Update this file each month with new financial data
+
+const dashboardData = {
+    // Report Date
+    reportDate: "September 30, 2025",
+    
+    // Key Metrics
+    metrics: {
+        totalAssets: {
+            current: 690397,
+            previous: 719805,
+            change: -29408
+        },
+        totalCash: {
+            current: 557800,
+            previous: 575538,
+            change: -17737
+        },
+        netIncome: {
+            current: 14159,
+            previous: 36966,
+            change: -22807
+        },
+        accountsReceivable: {
+            current: 121912,
+            previous: 133583,
+            change: -11671
+        }
+    },
+    
+    // Bank Accounts
+    bankAccounts: [
+        {
+            name: "Operating & ICS AAB 1402",
+            current: 834,
+            previous: 834,
+            change: 0
+        },
+        {
+            name: "Operating AAB Cdar",
+            current: 102128,
+            previous: 102011,
+            change: 117
+        },
+        {
+            name: "Operating CD - FCB Bank",
+            current: 85235,
+            previous: 85235,
+            change: 0
+        },
+        {
+            name: "Reserve AAB Cdar",
+            current: 101840,
+            previous: 101724,
+            change: 116
+        },
+        {
+            name: "AAB OPR #2264",
+            current: 127559,
+            previous: 145555,
+            change: -17996
+        },
+        {
+            name: "AAB RSV #5071",
+            current: 123959,
+            previous: 123934,
+            change: 25
+        }
+    ],
+    
+    // Asset Distribution
+    assets: {
+        operatingCash: 316966,
+        reserveCash: 225799,
+        accountsReceivable: 121912,
+        prepaidExpenses: 10685
+    },
+    
+    // Cash Trend (add more months as needed)
+    cashTrend: {
+        labels: ["August 2025", "September 2025"],
+        values: [575538, 557800]
+    },
+    
+    // Income YTD vs Budget
+    income: {
+        assessments: { actual: 290489, budget: 371475 },
+        interest: { actual: 16873, budget: 3600 },
+        feesOther: { actual: 58802, budget: 22485 }
+    },
+    
+    // Top Expenses YTD
+    topExpenses: [
+        { name: "Patrol Service", amount: 122052 },
+        { name: "Pool Maintenance", amount: 67471 },
+        { name: "Landscaping", amount: 50703 },
+        { name: "Management", amount: 33408 },
+        { name: "Utilities", amount: 16790 }
+    ],
+    
+    // Monthly Income & Expenses
+    monthly: {
+        income: 1044,
+        expenses: 23851
+    },
+    
+    // Budget Variance
+    variance: {
+        income: -30871,
+        expenses: -47503,
+        net: 16632
+    }
+};
