@@ -1,0 +1,631 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Barkers Ridge HOA Financial Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="dashboard_data.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 20px;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+        
+        .header {
+            background: white;
+            padding: 30px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #333;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+        
+        .date {
+            color: #666;
+            font-size: 1.1em;
+        }
+        
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            padding-top: 20px;
+        }
+        
+        .metric-card {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .metric-label {
+            color: #666;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 10px;
+        }
+        
+        .metric-value {
+            color: #333;
+            font-size: 2em;
+            font-weight: bold;
+        }
+        
+        .metric-change {
+            font-size: 0.85em;
+            margin-top: 8px;
+        }
+        
+        .positive {
+            color: #10b981;
+        }
+        
+        .negative {
+            color: #ef4444;
+        }
+        
+        .charts-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            padding-top: 20px;
+        }
+        
+        .chart-container {
+            background: white;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        
+        .chart-title {
+            color: #333;
+            font-size: 1.3em;
+            margin-bottom: 20px;
+            font-weight: 600;
+        }
+        
+        canvas {
+            max-height: 300px;
+        }
+        
+        .expandable-section {
+            margin-bottom: 20px;
+        }
+        
+        .section-header {
+            background: white;
+            padding: 20px 25px;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+        
+        .section-header:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 12px 35px rgba(0,0,0,0.25);
+        }
+        
+        .section-header h2 {
+            color: #333;
+            font-size: 1.5em;
+            font-weight: 600;
+            margin: 0;
+        }
+        
+        .expand-icon {
+            font-size: 1.5em;
+            color: #667eea;
+            transition: transform 0.3s ease;
+        }
+        
+        .expand-icon.rotated {
+            transform: rotate(180deg);
+        }
+        
+        .section-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.4s ease;
+        }
+        
+        .section-content.expanded {
+            max-height: 2000px;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 768px) {
+            .charts-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 1.8em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Barkers Ridge HOA</h1>
+            <p class="date" id="reportDate">Financial Dashboard</p>
+        </div>
+        
+        <div class="expandable-section">
+            <div class="section-header" onclick="toggleSection('metrics')">
+                <h2>Key Metrics</h2>
+                <span class="expand-icon" id="metrics-icon">▼</span>
+            </div>
+            <div class="section-content expanded" id="metrics-content">
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-label">Total Assets</div>
+                        <div class="metric-value" id="totalAssets"></div>
+                        <div class="metric-change" id="totalAssetsChange"></div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Total Cash</div>
+                        <div class="metric-value" id="totalCash"></div>
+                        <div class="metric-change" id="totalCashChange"></div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Net Income (Sept)</div>
+                        <div class="metric-value" id="netIncome"></div>
+                        <div class="metric-change" id="netIncomeChange"></div>
+                    </div>
+                    
+                    <div class="metric-card">
+                        <div class="metric-label">Accounts Receivable</div>
+                        <div class="metric-value" id="accountsReceivable"></div>
+                        <div class="metric-change" id="accountsReceivableChange"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="expandable-section">
+            <div class="section-header" onclick="toggleSection('bank-accounts')">
+                <h2>Bank Account Balances</h2>
+                <span class="expand-icon" id="bank-accounts-icon">▼</span>
+            </div>
+            <div class="section-content expanded" id="bank-accounts-content">
+                <div class="chart-container">
+                    <div style="overflow-x: auto;">
+                        <table style="width: 100%; border-collapse: collapse;">
+                            <thead>
+                                <tr style="background-color: #f3f4f6; text-align: left;">
+                                    <th style="padding: 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600;">Account</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600; text-align: right;">Current Month</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600; text-align: right;">Previous Month</th>
+                                    <th style="padding: 12px; border-bottom: 2px solid #e5e7eb; font-weight: 600; text-align: right;">Change</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bankAccountsTable">
+                                <!-- Bank accounts will be populated by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="expandable-section">
+            <div class="section-header" onclick="toggleSection('charts')">
+                <h2>Financial Charts & Analysis</h2>
+                <span class="expand-icon" id="charts-icon">▼</span>
+            </div>
+            <div class="section-content expanded" id="charts-content">
+                <div class="charts-grid">
+                    <div class="chart-container">
+                        <h3 class="chart-title">Asset Distribution</h3>
+                        <canvas id="assetChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="chart-title">Cash Position Trend</h3>
+                        <canvas id="cashTrendChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="chart-title">YTD Income vs Budget</h3>
+                        <canvas id="incomeChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="chart-title">Top Expense Categories (YTD)</h3>
+                        <canvas id="expenseChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="chart-title">Monthly Income & Expenses (Sept)</h3>
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                    
+                    <div class="chart-container">
+                        <h3 class="chart-title">Budget Variance Analysis</h3>
+                        <canvas id="varianceChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Toggle section expansion
+        function toggleSection(sectionId) {
+            const content = document.getElementById(sectionId + '-content');
+            const icon = document.getElementById(sectionId + '-icon');
+            
+            content.classList.toggle('expanded');
+            icon.classList.toggle('rotated');
+        }
+        
+        // Helper function to format currency
+        function formatCurrency(amount) {
+            return '$' + Math.abs(amount).toLocaleString();
+        }
+        
+        // Helper function to format change
+        function formatChange(change) {
+            const arrow = change >= 0 ? '↑' : '↓';
+            const className = change >= 0 ? 'positive' : 'negative';
+            return `<span class="${className}">${arrow} ${formatCurrency(change)} from prev</span>`;
+        }
+        
+        // Populate report date
+        document.getElementById('reportDate').textContent = 'Financial Dashboard - As of ' + dashboardData.reportDate;
+        
+        // Populate metrics
+        document.getElementById('totalAssets').textContent = formatCurrency(dashboardData.metrics.totalAssets.current);
+        document.getElementById('totalAssetsChange').innerHTML = formatChange(dashboardData.metrics.totalAssets.change);
+        
+        document.getElementById('totalCash').textContent = formatCurrency(dashboardData.metrics.totalCash.current);
+        document.getElementById('totalCashChange').innerHTML = formatChange(dashboardData.metrics.totalCash.change);
+        
+        document.getElementById('netIncome').textContent = formatCurrency(dashboardData.metrics.netIncome.current);
+        document.getElementById('netIncomeChange').innerHTML = formatChange(dashboardData.metrics.netIncome.change);
+        
+        document.getElementById('accountsReceivable').textContent = formatCurrency(dashboardData.metrics.accountsReceivable.current);
+        document.getElementById('accountsReceivableChange').innerHTML = formatChange(dashboardData.metrics.accountsReceivable.change);
+        
+        // Populate bank accounts table
+        const tableBody = document.getElementById('bankAccountsTable');
+        let totalCurrent = 0;
+        let totalPrevious = 0;
+        
+        dashboardData.bankAccounts.forEach(account => {
+            totalCurrent += account.current;
+            totalPrevious += account.previous;
+            
+            const changeColor = account.change > 0 ? '#10b981' : account.change < 0 ? '#ef4444' : '#6b7280';
+            const changePrefix = account.change > 0 ? '+' : '';
+            
+            const row = `
+                <tr style="border-bottom: 1px solid #e5e7eb;">
+                    <td style="padding: 12px; color: #374151; font-weight: 500;">${account.name}</td>
+                    <td style="padding: 12px; text-align: right;">${formatCurrency(account.current)}</td>
+                    <td style="padding: 12px; text-align: right;">${formatCurrency(account.previous)}</td>
+                    <td style="padding: 12px; text-align: right; color: ${changeColor};">${changePrefix}${formatCurrency(account.change)}</td>
+                </tr>
+            `;
+            tableBody.innerHTML += row;
+        });
+        
+        // Add total row
+        const totalChange = totalCurrent - totalPrevious;
+        const totalChangeColor = totalChange >= 0 ? '#10b981' : '#ef4444';
+        const totalChangePrefix = totalChange > 0 ? '+' : '';
+        
+        const totalRow = `
+            <tr style="background-color: #f9fafb; font-weight: 600;">
+                <td style="padding: 12px; color: #1f2937;">Total Operating Cash</td>
+                <td style="padding: 12px; text-align: right; color: #1f2937;">${formatCurrency(totalCurrent)}</td>
+                <td style="padding: 12px; text-align: right; color: #1f2937;">${formatCurrency(totalPrevious)}</td>
+                <td style="padding: 12px; text-align: right; color: ${totalChangeColor};">${totalChangePrefix}${formatCurrency(totalChange)}</td>
+            </tr>
+        `;
+        tableBody.innerHTML += totalRow;
+
+        // Asset Distribution Chart
+        const assetCtx = document.getElementById('assetChart').getContext('2d');
+        new Chart(assetCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Operating Cash', 'Reserve Cash', 'Accounts Receivable', 'Prepaid Expenses'],
+                datasets: [{
+                    data: [
+                        dashboardData.assets.operatingCash,
+                        dashboardData.assets.reserveCash,
+                        dashboardData.assets.accountsReceivable,
+                        dashboardData.assets.prepaidExpenses
+                    ],
+                    backgroundColor: ['#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.label + ': $' + context.parsed.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cash Trend Chart
+        const cashTrendCtx = document.getElementById('cashTrendChart').getContext('2d');
+        new Chart(cashTrendCtx, {
+            type: 'line',
+            data: {
+                labels: dashboardData.cashTrend.labels,
+                datasets: [{
+                    label: 'Total Cash',
+                    data: dashboardData.cashTrend.values,
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: false,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Income vs Budget Chart
+        const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+        new Chart(incomeCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Assessments', 'Interest', 'Fees & Other'],
+                datasets: [{
+                    label: 'Actual YTD',
+                    data: [
+                        dashboardData.income.assessments.actual,
+                        dashboardData.income.interest.actual,
+                        dashboardData.income.feesOther.actual
+                    ],
+                    backgroundColor: '#10b981'
+                }, {
+                    label: 'Budget YTD',
+                    data: [
+                        dashboardData.income.assessments.budget,
+                        dashboardData.income.interest.budget,
+                        dashboardData.income.feesOther.budget
+                    ],
+                    backgroundColor: '#94a3b8'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Top Expenses Chart
+        const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+        new Chart(expenseCtx, {
+            type: 'bar',
+            data: {
+                labels: dashboardData.topExpenses.map(e => e.name),
+                datasets: [{
+                    label: 'YTD Expenses',
+                    data: dashboardData.topExpenses.map(e => e.amount),
+                    backgroundColor: ['#ef4444', '#f97316', '#f59e0b', '#eab308', '#84cc16']
+                }]
+            },
+            options: {
+                indexAxis: 'y',
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return '$' + context.parsed.x.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Monthly Income & Expenses Chart
+        const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+        new Chart(monthlyCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Current Month'],
+                datasets: [{
+                    label: 'Income',
+                    data: [dashboardData.monthly.income],
+                    backgroundColor: '#10b981'
+                }, {
+                    label: 'Expenses',
+                    data: [dashboardData.monthly.expenses],
+                    backgroundColor: '#ef4444'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                return context.dataset.label + ': $' + context.parsed.y.toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Budget Variance Chart
+        const varianceCtx = document.getElementById('varianceChart').getContext('2d');
+        new Chart(varianceCtx, {
+            type: 'bar',
+            data: {
+                labels: ['Income', 'Expenses', 'Net'],
+                datasets: [{
+                    label: 'Budget Variance',
+                    data: [
+                        dashboardData.variance.income,
+                        dashboardData.variance.expenses,
+                        dashboardData.variance.net
+                    ],
+                    backgroundColor: function(context) {
+                        const value = context.parsed.y;
+                        return value < 0 ? '#ef4444' : '#10b981';
+                    }
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: true,
+                plugins: {
+                    legend: {
+                        display: false
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const value = context.parsed.y;
+                                const prefix = value >= 0 ? '+$' : '-$';
+                                return prefix + Math.abs(value).toLocaleString();
+                            }
+                        }
+                    }
+                },
+                scales: {
+                    y: {
+                        ticks: {
+                            callback: function(value) {
+                                return '$' + value.toLocaleString();
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+
+
+    <footer style="text-align:center; color:#888; margin-top:40px; font-size:0.95em;">
+        © 2025 Barkers Ridge HOA Financial Dashboard. Designed by Christina Van Houten.
+    </footer>
+</body>
+</html>
